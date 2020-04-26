@@ -53,5 +53,11 @@ namespace WebAPI_reservation.Models
                 return false;
             }
         }
+
+        public void Remove(int id)
+        {
+            Book book = Get(id);
+            data.Remove(book);
+        }
     }
 }
