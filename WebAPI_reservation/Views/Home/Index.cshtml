@@ -1,0 +1,20 @@
+﻿@using WebAPI_reservation.Models
+
+@model IEnumerable<Book>
+
+@{
+    ViewBag.Title = "Rezerwacje";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts{}
+
+@section Body{
+    <div id="list" class="section card text-white bg-primary">
+        @Html.Partial("List", Model)
+    </div>
+    <div id="edit" class="section card text-white bg-primary">
+        @Html.Partial("Edit", new Book())
+    </div>
+
+}
