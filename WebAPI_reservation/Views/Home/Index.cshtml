@@ -3,16 +3,93 @@
 @model IEnumerable<Book>
 
 @{
-    ViewBag.Title = "Rezerwacje";
+    ViewBag.Title = "Book";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@section Scripts{}
+@section Scripts{
+    <script>
+        //zdefiniowanie modelu (użycie biblioteki Knockout)
+        var model = {
+            book: ko.observableArray()
+
+            edit: {
+                name: ko.book(""),
+                location: ko.book("")
+            },
+            displayList: ko.observable(true)
+        };
+
+        // $.ajax zapewnia dostep do funkcji jQuery Ajax.
+        function sendAjaxRequest(httpMethod, callback, url) {
+            $.ajax("/api/web" + (url ? "/" + url : ""), {
+                type: httpMethod, success: callback
+            });
+        }
+
+        function getAllItems() {
+            sendAjaxRequest("GET", function (data) {
+                //usunięcie istniejących danych w obesrwowalnej tablicy
+                model.book.removeAll();
+                //iteracja przez wynik z serwera
+                for (var i = 0; i < data.length; i++) {
+                    //umieszczenie nowych danych w tablicy
+                    model.book.push(data[i]);
+                }
+            });
+        }
+
+        function removeItem(item) {
+            sendAjaxRequest("DELETE", function () {
+                //odswiezenie danych
+                getAllItems();
+            }, item.BookId);
+        }
+
+        //(document).ready - opoznienie wykonanai funkcji, dopoki elementy HTML zostana wczytane
+        // getAllItems(); - wczytanie danych z serwera
+        //applyBindings - uzycie modelu danych do przetworzenia data-bind
+        $(document).ready(function () {
+            getAllItems();
+            ko.applyBindings(model);
+        });
+    </script>
+}
 
 @section Body{
-    <div id="list" class="section card">
-        @Html.Partial("List", Model)
+    <div id="summary" class="section panel panel-primary">
+        <div class="card-header bg-primary text-white pb-0"><h4>Lista Rezerwacji</h4></div>
+        <div class="card-body">
+            <table class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Wynajmujący</th>
+                        <th>Pokój</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                @* Mechanizm dolaczania *@
+                <tbody data-bind="foreach: model.book">
+                    <tr>
+                        <td data-bind="text: BookId"></td>
+                        <td data-bind="text: CustomerName"></td>
+                        <td data-bind="text: Room"></td>
+                        <td>
+                            <button class="btn btn-xs btn-primary" data-bind="click: removeItem">
+                                Usuń
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
+
+
+    @*<div id="list" class="section card">
+            @Html.Partial("List", Model)
+        </div>*@
     <div id="edit" class="section card">
         @Html.Partial("Edit", new Book())
     </div>
