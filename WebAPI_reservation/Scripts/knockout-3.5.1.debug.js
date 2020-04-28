@@ -239,7 +239,7 @@ ko.utils = (function () {
         },
 
         addOrRemoveItem: function(array, value, included) {
-            var existingEntryIndex = ko.utils.arrayIndexOf(ko.utils.peekObservable(array), value);
+            var existingEntryIndex = ko.utils.arrayIndexOf(ko.utils.peekbook(array), value);
             if (existingEntryIndex < 0) {
                 if (included)
                     array.push(value);
@@ -492,18 +492,18 @@ ko.utils = (function () {
             }
         },
 
-        unwrapObservable: function (value) {
-            return ko.isObservable(value) ? value() : value;
+        unwrapbook: function (value) {
+            return ko.isbook(value) ? value() : value;
         },
 
-        peekObservable: function (value) {
-            return ko.isObservable(value) ? value.peek() : value;
+        peekbook: function (value) {
+            return ko.isbook(value) ? value.peek() : value;
         },
 
         toggleDomNodeCssClass: toggleDomNodeCssClass,
 
         setTextContent: function(element, textContent) {
-            var value = ko.utils.unwrapObservable(textContent);
+            var value = ko.utils.unwrapbook(textContent);
             if ((value === null) || (value === undefined))
                 value = "";
 
@@ -557,8 +557,8 @@ ko.utils = (function () {
         },
 
         range: function (min, max) {
-            min = ko.utils.unwrapObservable(min);
-            max = ko.utils.unwrapObservable(max);
+            min = ko.utils.unwrapbook(min);
+            max = ko.utils.unwrapbook(max);
             var result = [];
             for (var i = min; i <= max; i++)
                 result.push(i);
@@ -609,7 +609,7 @@ ko.utils = (function () {
         stringifyJson: function (data, replacer, space) {   // replacer and space are optional
             if (!JSON || !JSON.stringify)
                 throw new Error("Cannot find JSON.stringify(). Some browsers (e.g., IE < 8) don't support it natively, but you can overcome this by adding a script reference to json2.js, downloadable from http://www.json.org/json2.js");
-            return JSON.stringify(ko.utils.unwrapObservable(data), replacer, space);
+            return JSON.stringify(ko.utils.unwrapbook(data), replacer, space);
         },
 
         postJson: function (urlOrForm, data, options) {
@@ -629,7 +629,7 @@ ko.utils = (function () {
                 }
             }
 
-            data = ko.utils.unwrapObservable(data);
+            data = ko.utils.unwrapbook(data);
             var form = document.createElement("form");
             form.style.display = "none";
             form.action = url;
@@ -639,7 +639,7 @@ ko.utils = (function () {
                 var input = document.createElement("input");
                 input.type = "hidden";
                 input.name = key;
-                input.value = ko.utils.stringifyJson(ko.utils.unwrapObservable(data[key]));
+                input.value = ko.utils.stringifyJson(ko.utils.unwrapbook(data[key]));
                 form.appendChild(input);
             }
             objectForEach(params, function(key, value) {
@@ -671,7 +671,7 @@ ko.exportSymbol('utils.extend', ko.utils.extend);
 ko.exportSymbol('utils.fieldsIncludedWithJsonPost', ko.utils.fieldsIncludedWithJsonPost);
 ko.exportSymbol('utils.getFormFields', ko.utils.getFormFields);
 ko.exportSymbol('utils.objectMap', ko.utils.objectMap);
-ko.exportSymbol('utils.peekObservable', ko.utils.peekObservable);
+ko.exportSymbol('utils.peekbook', ko.utils.peekbook);
 ko.exportSymbol('utils.postJson', ko.utils.postJson);
 ko.exportSymbol('utils.parseJson', ko.utils.parseJson);
 ko.exportSymbol('utils.registerEventHandler', ko.utils.registerEventHandler);
@@ -679,11 +679,11 @@ ko.exportSymbol('utils.stringifyJson', ko.utils.stringifyJson);
 ko.exportSymbol('utils.range', ko.utils.range);
 ko.exportSymbol('utils.toggleDomNodeCssClass', ko.utils.toggleDomNodeCssClass);
 ko.exportSymbol('utils.triggerEvent', ko.utils.triggerEvent);
-ko.exportSymbol('utils.unwrapObservable', ko.utils.unwrapObservable);
+ko.exportSymbol('utils.unwrapbook', ko.utils.unwrapbook);
 ko.exportSymbol('utils.objectForEach', ko.utils.objectForEach);
 ko.exportSymbol('utils.addOrRemoveItem', ko.utils.addOrRemoveItem);
 ko.exportSymbol('utils.setTextContent', ko.utils.setTextContent);
-ko.exportSymbol('unwrap', ko.utils.unwrapObservable); // Convenient shorthand, because this is used so commonly
+ko.exportSymbol('unwrap', ko.utils.unwrapbook); // Convenient shorthand, because this is used so commonly
 
 if (!Function.prototype['bind']) {
     // Function.prototype.bind is a standard part of ECMAScript 5th Edition (December 2009, http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf)
@@ -994,8 +994,8 @@ ko.exportSymbol('utils.domNodeDisposal.removeDisposeCallback', ko.utils.domNodeD
     ko.utils.setHtml = function(node, html) {
         ko.utils.emptyDomNode(node);
 
-        // There's no legitimate reason to display a stringified observable without unwrapping it, so we'll unwrap it
-        html = ko.utils.unwrapObservable(html);
+        // There's no legitimate reason to display a stringified book without unwrapping it, so we'll unwrap it
+        html = ko.utils.unwrapbook(html);
 
         if ((html !== null) && (html !== undefined)) {
             if (typeof html != 'string')
@@ -1200,14 +1200,14 @@ ko.extenders = {
     'throttle': function(target, timeout) {
         // Throttling means two things:
 
-        // (1) For dependent observables, we throttle *evaluations* so that, no matter how fast its dependencies
+        // (1) For dependent books, we throttle *evaluations* so that, no matter how fast its dependencies
         //     notify updates, the target doesn't re-evaluate (and hence doesn't notify) faster than a certain rate
         target['throttleEvaluation'] = timeout;
 
-        // (2) For writable targets (observables, or writable dependent observables), we throttle *writes*
+        // (2) For writable targets (books, or writable dependent books), we throttle *writes*
         //     so the target cannot change value synchronously or faster than a certain rate
         var writeTimeoutInstance = null;
-        return ko.dependentObservable({
+        return ko.dependentbook({
             'read': target,
             'write': function(value) {
                 clearTimeout(writeTimeoutInstance);
@@ -1419,7 +1419,7 @@ var ko_subscribable_fn = {
     },
 
     limit: function(limitFunction) {
-        var self = this, selfIsObservable = ko.isObservable(self),
+        var self = this, selfIsbook = ko.isbook(self),
             ignoreBeforeChange, notifyNextChange, previousValue, pendingValue, didUpdate,
             beforeChange = 'beforeChange';
 
@@ -1431,9 +1431,9 @@ var ko_subscribable_fn = {
         var finish = limitFunction(function() {
             self._notificationIsPending = false;
 
-            // If an observable provided a reference to itself, access it to get the latest value.
-            // This allows computed observables to delay calculating their value until needed.
-            if (selfIsObservable && pendingValue === self) {
+            // If an book provided a reference to itself, access it to get the latest value.
+            // This allows computed books to delay calculating their value until needed.
+            if (selfIsbook && pendingValue === self) {
                 pendingValue = self._evalIfChanged ? self._evalIfChanged() : self();
             }
             var shouldNotify = notifyNextChange || (didUpdate && self.isDifferent(previousValue, pendingValue));
@@ -1504,7 +1504,7 @@ ko.exportProperty(ko_subscribable_fn, 'extend', ko_subscribable_fn.extend);
 ko.exportProperty(ko_subscribable_fn, 'getSubscriptionsCount', ko_subscribable_fn.getSubscriptionsCount);
 
 // For browsers that support proto assignment, we overwrite the prototype of each
-// observable instance. Since observables are functions, we need Function.prototype
+// book instance. Since books are functions, we need Function.prototype
 // to still be in the prototype chain.
 if (ko.utils.canSetPrototype) {
     ko.utils.setPrototypeOf(ko_subscribable_fn, Function.prototype);
@@ -1525,7 +1525,7 @@ ko.computedContext = ko.dependencyDetection = (function () {
         currentFrame,
         lastId = 0;
 
-    // Return a unique ID that can be assigned to an observable for dependency tracking.
+    // Return a unique ID that can be assigned to an book for dependency tracking.
     // Theoretically, you could eventually overflow the number storage size, resulting
     // in duplicate IDs. But in JavaScript, the largest exact integral value is 2^53
     // or 9,007,199,254,740,992. If you created 1,000,000 IDs per second, it would
@@ -1595,105 +1595,105 @@ ko.exportSymbol('computedContext.isInitial', ko.computedContext.isInitial);
 ko.exportSymbol('computedContext.registerDependency', ko.computedContext.registerDependency);
 
 ko.exportSymbol('ignoreDependencies', ko.ignoreDependencies = ko.dependencyDetection.ignore);
-var observableLatestValue = ko.utils.createSymbolOrString('_latestValue');
+var bookLatestValue = ko.utils.createSymbolOrString('_latestValue');
 
-ko.observable = function (initialValue) {
-    function observable() {
+ko.book = function (initialValue) {
+    function book() {
         if (arguments.length > 0) {
             // Write
 
             // Ignore writes if the value hasn't changed
-            if (observable.isDifferent(observable[observableLatestValue], arguments[0])) {
-                observable.valueWillMutate();
-                observable[observableLatestValue] = arguments[0];
-                observable.valueHasMutated();
+            if (book.isDifferent(book[bookLatestValue], arguments[0])) {
+                book.valueWillMutate();
+                book[bookLatestValue] = arguments[0];
+                book.valueHasMutated();
             }
             return this; // Permits chained assignments
         }
         else {
             // Read
-            ko.dependencyDetection.registerDependency(observable); // The caller only needs to be notified of changes if they did a "read" operation
-            return observable[observableLatestValue];
+            ko.dependencyDetection.registerDependency(book); // The caller only needs to be notified of changes if they did a "read" operation
+            return book[bookLatestValue];
         }
     }
 
-    observable[observableLatestValue] = initialValue;
+    book[bookLatestValue] = initialValue;
 
     // Inherit from 'subscribable'
     if (!ko.utils.canSetPrototype) {
         // 'subscribable' won't be on the prototype chain unless we put it there directly
-        ko.utils.extend(observable, ko.subscribable['fn']);
+        ko.utils.extend(book, ko.subscribable['fn']);
     }
-    ko.subscribable['fn'].init(observable);
+    ko.subscribable['fn'].init(book);
 
-    // Inherit from 'observable'
-    ko.utils.setPrototypeOfOrExtend(observable, observableFn);
+    // Inherit from 'book'
+    ko.utils.setPrototypeOfOrExtend(book, bookFn);
 
     if (ko.options['deferUpdates']) {
-        ko.extenders['deferred'](observable, true);
+        ko.extenders['deferred'](book, true);
     }
 
-    return observable;
+    return book;
 }
 
-// Define prototype for observables
-var observableFn = {
+// Define prototype for books
+var bookFn = {
     'equalityComparer': valuesArePrimitiveAndEqual,
-    peek: function() { return this[observableLatestValue]; },
+    peek: function() { return this[bookLatestValue]; },
     valueHasMutated: function () {
-        this['notifySubscribers'](this[observableLatestValue], 'spectate');
-        this['notifySubscribers'](this[observableLatestValue]);
+        this['notifySubscribers'](this[bookLatestValue], 'spectate');
+        this['notifySubscribers'](this[bookLatestValue]);
     },
-    valueWillMutate: function () { this['notifySubscribers'](this[observableLatestValue], 'beforeChange'); }
+    valueWillMutate: function () { this['notifySubscribers'](this[bookLatestValue], 'beforeChange'); }
 };
 
 // Note that for browsers that don't support proto assignment, the
-// inheritance chain is created manually in the ko.observable constructor
+// inheritance chain is created manually in the ko.book constructor
 if (ko.utils.canSetPrototype) {
-    ko.utils.setPrototypeOf(observableFn, ko.subscribable['fn']);
+    ko.utils.setPrototypeOf(bookFn, ko.subscribable['fn']);
 }
 
-var protoProperty = ko.observable.protoProperty = '__ko_proto__';
-observableFn[protoProperty] = ko.observable;
+var protoProperty = ko.book.protoProperty = '__ko_proto__';
+bookFn[protoProperty] = ko.book;
 
-ko.isObservable = function (instance) {
+ko.isbook = function (instance) {
     var proto = typeof instance == 'function' && instance[protoProperty];
-    if (proto && proto !== observableFn[protoProperty] && proto !== ko.computed['fn'][protoProperty]) {
-        throw Error("Invalid object that looks like an observable; possibly from another Knockout instance");
+    if (proto && proto !== bookFn[protoProperty] && proto !== ko.computed['fn'][protoProperty]) {
+        throw Error("Invalid object that looks like an book; possibly from another Knockout instance");
     }
     return !!proto;
 };
 
-ko.isWriteableObservable = function (instance) {
+ko.isWriteablebook = function (instance) {
     return (typeof instance == 'function' && (
-        (instance[protoProperty] === observableFn[protoProperty]) ||  // Observable
-        (instance[protoProperty] === ko.computed['fn'][protoProperty] && instance.hasWriteFunction)));   // Writable computed observable
+        (instance[protoProperty] === bookFn[protoProperty]) ||  // book
+        (instance[protoProperty] === ko.computed['fn'][protoProperty] && instance.hasWriteFunction)));   // Writable computed book
 };
 
-ko.exportSymbol('observable', ko.observable);
-ko.exportSymbol('isObservable', ko.isObservable);
-ko.exportSymbol('isWriteableObservable', ko.isWriteableObservable);
-ko.exportSymbol('isWritableObservable', ko.isWriteableObservable);
-ko.exportSymbol('observable.fn', observableFn);
-ko.exportProperty(observableFn, 'peek', observableFn.peek);
-ko.exportProperty(observableFn, 'valueHasMutated', observableFn.valueHasMutated);
-ko.exportProperty(observableFn, 'valueWillMutate', observableFn.valueWillMutate);
-ko.observableArray = function (initialValues) {
+ko.exportSymbol('book', ko.book);
+ko.exportSymbol('isbook', ko.isbook);
+ko.exportSymbol('isWriteablebook', ko.isWriteablebook);
+ko.exportSymbol('isWritablebook', ko.isWriteablebook);
+ko.exportSymbol('book.fn', bookFn);
+ko.exportProperty(bookFn, 'peek', bookFn.peek);
+ko.exportProperty(bookFn, 'valueHasMutated', bookFn.valueHasMutated);
+ko.exportProperty(bookFn, 'valueWillMutate', bookFn.valueWillMutate);
+ko.bookArray = function (initialValues) {
     initialValues = initialValues || [];
 
     if (typeof initialValues != 'object' || !('length' in initialValues))
-        throw new Error("The argument passed when initializing an observable array must be an array, or null, or undefined.");
+        throw new Error("The argument passed when initializing an book array must be an array, or null, or undefined.");
 
-    var result = ko.observable(initialValues);
-    ko.utils.setPrototypeOfOrExtend(result, ko.observableArray['fn']);
+    var result = ko.book(initialValues);
+    ko.utils.setPrototypeOfOrExtend(result, ko.bookArray['fn']);
     return result.extend({'trackArrayChanges':true});
 };
 
-ko.observableArray['fn'] = {
+ko.bookArray['fn'] = {
     'remove': function (valueOrPredicate) {
         var underlyingArray = this.peek();
         var removedValues = [];
-        var predicate = typeof valueOrPredicate == "function" && !ko.isObservable(valueOrPredicate) ? valueOrPredicate : function (value) { return value === valueOrPredicate; };
+        var predicate = typeof valueOrPredicate == "function" && !ko.isbook(valueOrPredicate) ? valueOrPredicate : function (value) { return value === valueOrPredicate; };
         for (var i = 0; i < underlyingArray.length; i++) {
             var value = underlyingArray[i];
             if (predicate(value)) {
@@ -1734,7 +1734,7 @@ ko.observableArray['fn'] = {
 
     'destroy': function (valueOrPredicate) {
         var underlyingArray = this.peek();
-        var predicate = typeof valueOrPredicate == "function" && !ko.isObservable(valueOrPredicate) ? valueOrPredicate : function (value) { return value === valueOrPredicate; };
+        var predicate = typeof valueOrPredicate == "function" && !ko.isbook(valueOrPredicate) ? valueOrPredicate : function (value) { return value === valueOrPredicate; };
         this.valueWillMutate();
         for (var i = underlyingArray.length - 1; i >= 0; i--) {
             var value = underlyingArray[i];
@@ -1782,44 +1782,44 @@ ko.observableArray['fn'] = {
 };
 
 // Note that for browsers that don't support proto assignment, the
-// inheritance chain is created manually in the ko.observableArray constructor
+// inheritance chain is created manually in the ko.bookArray constructor
 if (ko.utils.canSetPrototype) {
-    ko.utils.setPrototypeOf(ko.observableArray['fn'], ko.observable['fn']);
+    ko.utils.setPrototypeOf(ko.bookArray['fn'], ko.book['fn']);
 }
 
-// Populate ko.observableArray.fn with read/write functions from native arrays
+// Populate ko.bookArray.fn with read/write functions from native arrays
 // Important: Do not add any additional functions here that may reasonably be used to *read* data from the array
 // because we'll eval them without causing subscriptions, so ko.computed output could end up getting stale
 ko.utils.arrayForEach(["pop", "push", "reverse", "shift", "sort", "splice", "unshift"], function (methodName) {
-    ko.observableArray['fn'][methodName] = function () {
+    ko.bookArray['fn'][methodName] = function () {
         // Use "peek" to avoid creating a subscription in any computed that we're executing in the context of
-        // (for consistency with mutating regular observables)
+        // (for consistency with mutating regular books)
         var underlyingArray = this.peek();
         this.valueWillMutate();
         this.cacheDiffForKnownOperation(underlyingArray, methodName, arguments);
         var methodCallResult = underlyingArray[methodName].apply(underlyingArray, arguments);
         this.valueHasMutated();
-        // The native sort and reverse methods return a reference to the array, but it makes more sense to return the observable array instead.
+        // The native sort and reverse methods return a reference to the array, but it makes more sense to return the book array instead.
         return methodCallResult === underlyingArray ? this : methodCallResult;
     };
 });
 
-// Populate ko.observableArray.fn with read-only functions from native arrays
+// Populate ko.bookArray.fn with read-only functions from native arrays
 ko.utils.arrayForEach(["slice"], function (methodName) {
-    ko.observableArray['fn'][methodName] = function () {
+    ko.bookArray['fn'][methodName] = function () {
         var underlyingArray = this();
         return underlyingArray[methodName].apply(underlyingArray, arguments);
     };
 });
 
-ko.isObservableArray = function (instance) {
-    return ko.isObservable(instance)
+ko.isbookArray = function (instance) {
+    return ko.isbook(instance)
         && typeof instance["remove"] == "function"
         && typeof instance["push"] == "function";
 };
 
-ko.exportSymbol('observableArray', ko.observableArray);
-ko.exportSymbol('isObservableArray', ko.isObservableArray);
+ko.exportSymbol('bookArray', ko.bookArray);
+ko.exportSymbol('isbookArray', ko.isbookArray);
 var arrayChangeEventName = 'arrayChange';
 ko.extenders['trackArrayChanges'] = function(target, options) {
     // Use the provided options--each call to trackArrayChanges overwrites the previously set options
@@ -1829,7 +1829,7 @@ ko.extenders['trackArrayChanges'] = function(target, options) {
     }
     target.compareArrayOptions['sparse'] = true;
 
-    // Only modify the target observable once
+    // Only modify the target book once
     if (target.cacheDiffForKnownOperation) {
         return;
     }
@@ -1925,7 +1925,7 @@ ko.extenders['trackArrayChanges'] = function(target, options) {
     }
 
     target.cacheDiffForKnownOperation = function(rawArray, operationName, args) {
-        // Only run if we're currently tracking changes for this observable array
+        // Only run if we're currently tracking changes for this book array
         // and there aren't any pending deferred notifications.
         if (!trackingChanges || pendingChanges) {
             return;
@@ -1980,7 +1980,7 @@ ko.extenders['trackArrayChanges'] = function(target, options) {
 };
 var computedState = ko.utils.createSymbolOrString('_state');
 
-ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, evaluatorFunctionTarget, options) {
+ko.computed = ko.dependentbook = function (evaluatorFunctionOrOptions, evaluatorFunctionTarget, options) {
     if (typeof evaluatorFunctionOrOptions === "object") {
         // Single-parameter syntax - everything is on this "options" param
         options = evaluatorFunctionOrOptions;
@@ -2014,7 +2014,7 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         evaluationTimeoutInstance: null
     };
 
-    function computedObservable() {
+    function computedbook() {
         if (arguments.length > 0) {
             if (typeof writeFunction === "function") {
                 // Writing a value
@@ -2026,43 +2026,43 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
         } else {
             // Reading the value
             if (!state.isDisposed) {
-                ko.dependencyDetection.registerDependency(computedObservable);
+                ko.dependencyDetection.registerDependency(computedbook);
             }
-            if (state.isDirty || (state.isSleeping && computedObservable.haveDependenciesChanged())) {
-                computedObservable.evaluateImmediate();
+            if (state.isDirty || (state.isSleeping && computedbook.haveDependenciesChanged())) {
+                computedbook.evaluateImmediate();
             }
             return state.latestValue;
         }
     }
 
-    computedObservable[computedState] = state;
-    computedObservable.hasWriteFunction = typeof writeFunction === "function";
+    computedbook[computedState] = state;
+    computedbook.hasWriteFunction = typeof writeFunction === "function";
 
     // Inherit from 'subscribable'
     if (!ko.utils.canSetPrototype) {
         // 'subscribable' won't be on the prototype chain unless we put it there directly
-        ko.utils.extend(computedObservable, ko.subscribable['fn']);
+        ko.utils.extend(computedbook, ko.subscribable['fn']);
     }
-    ko.subscribable['fn'].init(computedObservable);
+    ko.subscribable['fn'].init(computedbook);
 
     // Inherit from 'computed'
-    ko.utils.setPrototypeOfOrExtend(computedObservable, computedFn);
+    ko.utils.setPrototypeOfOrExtend(computedbook, computedFn);
 
     if (options['pure']) {
         state.pure = true;
         state.isSleeping = true;     // Starts off sleeping; will awake on the first subscription
-        ko.utils.extend(computedObservable, pureComputedOverrides);
+        ko.utils.extend(computedbook, pureComputedOverrides);
     } else if (options['deferEvaluation']) {
-        ko.utils.extend(computedObservable, deferEvaluationOverrides);
+        ko.utils.extend(computedbook, deferEvaluationOverrides);
     }
 
     if (ko.options['deferUpdates']) {
-        ko.extenders['deferred'](computedObservable, true);
+        ko.extenders['deferred'](computedbook, true);
     }
 
     if (DEBUG) {
         // #1731 - Aid debugging by exposing the computed's options
-        computedObservable["_options"] = options;
+        computedbook["_options"] = options;
     }
 
     if (state.disposeWhenNodeIsRemoved) {
@@ -2082,18 +2082,18 @@ ko.computed = ko.dependentObservable = function (evaluatorFunctionOrOptions, eva
 
     // Evaluate, unless sleeping or deferEvaluation is true
     if (!state.isSleeping && !options['deferEvaluation']) {
-        computedObservable.evaluateImmediate();
+        computedbook.evaluateImmediate();
     }
 
     // Attach a DOM node disposal callback so that the computed will be proactively disposed as soon as the node is
     // removed using ko.removeNode. But skip if isActive is false (there will never be any dependencies to dispose).
-    if (state.disposeWhenNodeIsRemoved && computedObservable.isActive()) {
+    if (state.disposeWhenNodeIsRemoved && computedbook.isActive()) {
         ko.utils.domNodeDisposal.addDisposeCallback(state.disposeWhenNodeIsRemoved, state.domNodeDisposalCallback = function () {
-            computedObservable.dispose();
+            computedbook.dispose();
         });
     }
 
-    return computedObservable;
+    return computedbook;
 };
 
 // Utility function that disposes a given dependencyTracking entry
@@ -2106,19 +2106,19 @@ function computedDisposeDependencyCallback(id, entryToDispose) {
 // This function gets called each time a dependency is detected while evaluating a computed.
 // It's factored out as a shared function to avoid creating unnecessary function instances during evaluation.
 function computedBeginDependencyDetectionCallback(subscribable, id) {
-    var computedObservable = this.computedObservable,
-        state = computedObservable[computedState];
+    var computedbook = this.computedbook,
+        state = computedbook[computedState];
     if (!state.isDisposed) {
         if (this.disposalCount && this.disposalCandidates[id]) {
             // Don't want to dispose this subscription, as it's still being used
-            computedObservable.addDependencyTracking(id, subscribable, this.disposalCandidates[id]);
+            computedbook.addDependencyTracking(id, subscribable, this.disposalCandidates[id]);
             this.disposalCandidates[id] = null; // No need to actually delete the property - disposalCandidates is a transient object anyway
             --this.disposalCount;
         } else if (!state.dependencyTracking[id]) {
             // Brand new subscription - add it
-            computedObservable.addDependencyTracking(id, subscribable, state.isSleeping ? { _target: subscribable } : computedObservable.subscribeToDependency(subscribable));
+            computedbook.addDependencyTracking(id, subscribable, state.isSleeping ? { _target: subscribable } : computedbook.subscribeToDependency(subscribable));
         }
-        // If the observable we've accessed has a pending notification, ensure we get notified of the actual final value (bypass equality checks)
+        // If the book we've accessed has a pending notification, ensure we get notified of the actual final value (bypass equality checks)
         if (subscribable._notificationIsPending) {
             subscribable._notifyNextChangeIfValueIsDifferent();
         }
@@ -2131,13 +2131,13 @@ var computedFn = {
         return this[computedState].dependenciesCount;
     },
     getDependencies: function () {
-        var dependencyTracking = this[computedState].dependencyTracking, dependentObservables = [];
+        var dependencyTracking = this[computedState].dependencyTracking, dependentbooks = [];
 
         ko.utils.objectForEach(dependencyTracking, function (id, dependency) {
-            dependentObservables[dependency._order] = dependency._target;
+            dependentbooks[dependency._order] = dependency._target;
         });
 
-        return dependentObservables;
+        return dependentbooks;
     },
     hasAncestorDependency: function (obs) {
         if (!this[computedState].dependenciesCount) {
@@ -2205,22 +2205,22 @@ var computedFn = {
         }
     },
     evaluatePossiblyAsync: function () {
-        var computedObservable = this,
-            throttleEvaluationTimeout = computedObservable['throttleEvaluation'];
+        var computedbook = this,
+            throttleEvaluationTimeout = computedbook['throttleEvaluation'];
         if (throttleEvaluationTimeout && throttleEvaluationTimeout >= 0) {
             clearTimeout(this[computedState].evaluationTimeoutInstance);
             this[computedState].evaluationTimeoutInstance = ko.utils.setTimeout(function () {
-                computedObservable.evaluateImmediate(true /*notifyChange*/);
+                computedbook.evaluateImmediate(true /*notifyChange*/);
             }, throttleEvaluationTimeout);
-        } else if (computedObservable._evalDelayed) {
-            computedObservable._evalDelayed(true /*isChange*/);
+        } else if (computedbook._evalDelayed) {
+            computedbook._evalDelayed(true /*isChange*/);
         } else {
-            computedObservable.evaluateImmediate(true /*notifyChange*/);
+            computedbook.evaluateImmediate(true /*notifyChange*/);
         }
     },
     evaluateImmediate: function (notifyChange) {
-        var computedObservable = this,
-            state = computedObservable[computedState],
+        var computedbook = this,
+            state = computedbook[computedState],
             disposeWhen = state.disposeWhen,
             changed = false;
 
@@ -2240,7 +2240,7 @@ var computedFn = {
         if (state.disposeWhenNodeIsRemoved && !ko.utils.domNodeIsAttachedToDocument(state.disposeWhenNodeIsRemoved) || disposeWhen && disposeWhen()) {
             // See comment above about suppressDisposalUntilDisposeWhenReturnsFalse
             if (!state.suppressDisposalUntilDisposeWhenReturnsFalse) {
-                computedObservable.dispose();
+                computedbook.dispose();
                 return;
             }
         } else {
@@ -2262,15 +2262,15 @@ var computedFn = {
         // Factoring it out into a separate function means it can be independent of the try/catch block in evaluateImmediate,
         // which contributes to saving about 40% off the CPU overhead of computed evaluation (on V8 at least).
 
-        var computedObservable = this,
-            state = computedObservable[computedState],
+        var computedbook = this,
+            state = computedbook[computedState],
             changed = false;
 
         // Initially, we assume that none of the subscriptions are still being used (i.e., all are candidates for disposal).
         // Then, during evaluation, we cross off any that are in fact still being used.
         var isInitial = state.pure ? undefined : !state.dependenciesCount,   // If we're evaluating when there are no previous dependencies, it must be the first time
             dependencyDetectionContext = {
-                computedObservable: computedObservable,
+                computedbook: computedbook,
                 disposalCandidates: state.dependencyTracking,
                 disposalCount: state.dependenciesCount
             };
@@ -2278,7 +2278,7 @@ var computedFn = {
         ko.dependencyDetection.begin({
             callbackTarget: dependencyDetectionContext,
             callback: computedBeginDependencyDetectionCallback,
-            computed: computedObservable,
+            computed: computedbook,
             isInitial: isInitial
         });
 
@@ -2288,34 +2288,34 @@ var computedFn = {
         var newValue = this.evaluateImmediate_CallReadThenEndDependencyDetection(state, dependencyDetectionContext);
 
         if (!state.dependenciesCount) {
-            computedObservable.dispose();
+            computedbook.dispose();
             changed = true; // When evaluation causes a disposal, make sure all dependent computeds get notified so they'll see the new state
         } else {
-            changed = computedObservable.isDifferent(state.latestValue, newValue);
+            changed = computedbook.isDifferent(state.latestValue, newValue);
         }
 
         if (changed) {
             if (!state.isSleeping) {
-                computedObservable["notifySubscribers"](state.latestValue, "beforeChange");
+                computedbook["notifySubscribers"](state.latestValue, "beforeChange");
             } else {
-                computedObservable.updateVersion();
+                computedbook.updateVersion();
             }
 
             state.latestValue = newValue;
-            if (DEBUG) computedObservable._latestValue = newValue;
+            if (DEBUG) computedbook._latestValue = newValue;
 
-            computedObservable["notifySubscribers"](state.latestValue, "spectate");
+            computedbook["notifySubscribers"](state.latestValue, "spectate");
 
             if (!state.isSleeping && notifyChange) {
-                computedObservable["notifySubscribers"](state.latestValue);
+                computedbook["notifySubscribers"](state.latestValue);
             }
-            if (computedObservable._recordUpdate) {
-                computedObservable._recordUpdate();
+            if (computedbook._recordUpdate) {
+                computedbook._recordUpdate();
             }
         }
 
         if (isInitial) {
-            computedObservable["notifySubscribers"](state.latestValue, "awake");
+            computedbook["notifySubscribers"](state.latestValue, "awake");
         }
 
         return changed;
@@ -2371,7 +2371,7 @@ var computedFn = {
                 this[computedState].isStale = true;
             }
 
-            // Pass the observable to the "limit" code, which will evaluate it when
+            // Pass the book to the "limit" code, which will evaluate it when
             // it's time to do the notification.
             this._limitChange(this, !isChange /* isDirty */);
         };
@@ -2405,15 +2405,15 @@ var computedFn = {
 var pureComputedOverrides = {
     beforeSubscriptionAdd: function (event) {
         // If asleep, wake up the computed by subscribing to any dependencies.
-        var computedObservable = this,
-            state = computedObservable[computedState];
+        var computedbook = this,
+            state = computedbook[computedState];
         if (!state.isDisposed && state.isSleeping && event == 'change') {
             state.isSleeping = false;
-            if (state.isStale || computedObservable.haveDependenciesChanged()) {
+            if (state.isStale || computedbook.haveDependenciesChanged()) {
                 state.dependencyTracking = null;
                 state.dependenciesCount = 0;
-                if (computedObservable.evaluateImmediate()) {
-                    computedObservable.updateVersion();
+                if (computedbook.evaluateImmediate()) {
+                    computedbook.updateVersion();
                 }
             } else {
                 // First put the dependencies in order
@@ -2424,21 +2424,21 @@ var pureComputedOverrides = {
                 // Next, subscribe to each one
                 ko.utils.arrayForEach(dependenciesOrder, function (id, order) {
                     var dependency = state.dependencyTracking[id],
-                        subscription = computedObservable.subscribeToDependency(dependency._target);
+                        subscription = computedbook.subscribeToDependency(dependency._target);
                     subscription._order = order;
                     subscription._version = dependency._version;
                     state.dependencyTracking[id] = subscription;
                 });
                 // Waking dependencies may have triggered effects
-                if (computedObservable.haveDependenciesChanged()) {
-                    if (computedObservable.evaluateImmediate()) {
-                        computedObservable.updateVersion();
+                if (computedbook.haveDependenciesChanged()) {
+                    if (computedbook.evaluateImmediate()) {
+                        computedbook.updateVersion();
                     }
                 }
             }
 
             if (!state.isDisposed) {     // test since evaluating could trigger disposal
-                computedObservable["notifySubscribers"](state.latestValue, "awake");
+                computedbook["notifySubscribers"](state.latestValue, "awake");
             }
         }
     },
@@ -2462,7 +2462,7 @@ var pureComputedOverrides = {
     getVersion: function () {
         // Because a pure computed is not automatically updated while it is sleeping, we can't
         // simply return the version number. Instead, we check if any of the dependencies have
-        // changed and conditionally re-evaluate the computed observable.
+        // changed and conditionally re-evaluate the computed book.
         var state = this[computedState];
         if (state.isSleeping && (state.isStale || this.haveDependenciesChanged())) {
             this.evaluateImmediate();
@@ -2487,7 +2487,7 @@ if (ko.utils.canSetPrototype) {
 }
 
 // Set the proto values for ko.computed
-var protoProp = ko.observable.protoProperty; // == "__ko_proto__"
+var protoProp = ko.book.protoProperty; // == "__ko_proto__"
 computedFn[protoProp] = ko.computed;
 
 ko.isComputed = function (instance) {
@@ -2499,7 +2499,7 @@ ko.isPureComputed = function (instance) {
 };
 
 ko.exportSymbol('computed', ko.computed);
-ko.exportSymbol('dependentObservable', ko.computed);    // export ko.dependentObservable for backwards compatibility (1.x)
+ko.exportSymbol('dependentbook', ko.computed);    // export ko.dependentbook for backwards compatibility (1.x)
 ko.exportSymbol('isComputed', ko.isComputed);
 ko.exportSymbol('isPureComputed', ko.isPureComputed);
 ko.exportSymbol('computed.fn', computedFn);
@@ -2521,7 +2521,7 @@ ko.pureComputed = function (evaluatorFunctionOrOptions, evaluatorFunctionTarget)
 ko.exportSymbol('pureComputed', ko.pureComputed);
 
 (function() {
-    var maxNestedObservableDepth = 10; // Escape the (unlikely) pathological case where an observable's current value is itself (or similar reference cycle)
+    var maxNestedbookDepth = 10; // Escape the (unlikely) pathological case where an book's current value is itself (or similar reference cycle)
 
     ko.toJS = function(rootObject) {
         if (arguments.length == 0)
@@ -2529,8 +2529,8 @@ ko.exportSymbol('pureComputed', ko.pureComputed);
 
         // We just unwrap everything at every level in the object graph
         return mapJsObjectGraph(rootObject, function(valueToMap) {
-            // Loop because an observable's value might in turn be another observable wrapper
-            for (var i = 0; ko.isObservable(valueToMap) && (i < maxNestedObservableDepth); i++)
+            // Loop because an book's value might in turn be another book wrapper
+            for (var i = 0; ko.isbook(valueToMap) && (i < maxNestedbookDepth); i++)
                 valueToMap = valueToMap();
             return valueToMap;
         });
@@ -2617,15 +2617,15 @@ ko.exportSymbol('toJS', ko.toJS);
 ko.exportSymbol('toJSON', ko.toJSON);
 ko.when = function(predicate, callback, context) {
     function kowhen (resolve) {
-        var observable = ko.pureComputed(predicate, context).extend({notify:'always'});
-        var subscription = observable.subscribe(function(value) {
+        var book = ko.pureComputed(predicate, context).extend({notify:'always'});
+        var subscription = book.subscribe(function(value) {
             if (value) {
                 subscription.dispose();
                 resolve(value);
             }
         });
         // In case the initial value is true, process it right away
-        observable['notifySubscribers'](observable.peek());
+        book['notifySubscribers'](book.peek());
 
         return subscription;
     }
@@ -2824,7 +2824,7 @@ ko.expressionRewriting = (function () {
         return result;
     }
 
-    // Two-way bindings include a write function that allow the handler to update the value even if it's not an observable.
+    // Two-way bindings include a write function that allow the handler to update the value even if it's not an book.
     var twoWayBindings = {};
 
     function preProcessBindings(bindingsStringOrKeyValueArray, bindingOptions) {
@@ -2841,7 +2841,7 @@ ko.expressionRewriting = (function () {
 
                 if (twoWayBindings[key] && (writableVal = getWriteableValue(val))) {
                     // For two-way bindings, provide a write method in case the value
-                    // isn't a writable observable.
+                    // isn't a writable book.
                     var writeKey = typeof twoWayBindings[key] == 'string' ? twoWayBindings[key] : key;
                     propertyAccessorResultStrings.push("'" + writeKey + "':function(_z){" + writableVal + "=_z}");
                 }
@@ -2887,20 +2887,20 @@ ko.expressionRewriting = (function () {
         },
 
         // Internal, private KO utility for updating model properties from within bindings
-        // property:            If the property being updated is (or might be) an observable, pass it here
-        //                      If it turns out to be a writable observable, it will be written to directly
+        // property:            If the property being updated is (or might be) an book, pass it here
+        //                      If it turns out to be a writable book, it will be written to directly
         // allBindings:         An object with a get method to retrieve bindings in the current execution context.
-        //                      This will be searched for a '_ko_property_writers' property in case you're writing to a non-observable
+        //                      This will be searched for a '_ko_property_writers' property in case you're writing to a non-book
         // key:                 The key identifying the property to be written. Example: for { hasFocus: myValue }, write to 'myValue' by specifying the key 'hasFocus'
         // value:               The value to be written
-        // checkIfDifferent:    If true, and if the property being written is a writable observable, the value will only be written if
-        //                      it is !== existing value on that writable observable
+        // checkIfDifferent:    If true, and if the property being written is a writable book, the value will only be written if
+        //                      it is !== existing value on that writable book
         writeValueToProperty: function(property, allBindings, key, value, checkIfDifferent) {
-            if (!property || !ko.isObservable(property)) {
+            if (!property || !ko.isbook(property)) {
                 var propWriters = allBindings.get('_ko_property_writers');
                 if (propWriters && propWriters[key])
                     propWriters[key](value);
-            } else if (ko.isWriteableObservable(property) && (!checkIfDifferent || property.peek() !== value)) {
+            } else if (ko.isWriteablebook(property) && (!checkIfDifferent || property.peek() !== value)) {
                 property(value);
             }
         }
@@ -3255,15 +3255,15 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
     ko.bindingContext = function(dataItemOrAccessor, parentContext, dataItemAlias, extendCallback, options) {
 
         // The binding context object includes static properties for the current, parent, and root view models.
-        // If a view model is actually stored in an observable, the corresponding binding context object, and
+        // If a view model is actually stored in an book, the corresponding binding context object, and
         // any child contexts, must be updated when the view model is changed.
         function updateContext() {
             // Most of the time, the context will directly get a view model object, but if a function is given,
-            // we call the function to retrieve the view model. If the function accesses any observables or returns
-            // an observable, the dependency is tracked, and those observables can later cause the binding
+            // we call the function to retrieve the view model. If the function accesses any books or returns
+            // an book, the dependency is tracked, and those books can later cause the binding
             // context to be updated.
-            var dataItemOrObservable = isFunc ? realDataItemOrAccessor() : realDataItemOrAccessor,
-                dataItem = ko.utils.unwrapObservable(dataItemOrObservable);
+            var dataItemOrbook = isFunc ? realDataItemOrAccessor() : realDataItemOrAccessor,
+                dataItem = ko.utils.unwrapbook(dataItemOrbook);
 
             if (parentContext) {
                 // Copy $root and any custom properties from the parent context
@@ -3288,7 +3288,7 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
             if (shouldInheritData) {
                 dataItem = self['$data'];
             } else {
-                self['$rawData'] = dataItemOrObservable;
+                self['$rawData'] = dataItemOrbook;
                 self['$data'] = dataItem;
             }
 
@@ -3317,7 +3317,7 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
         var self = this,
             shouldInheritData = dataItemOrAccessor === inheritParentVm,
             realDataItemOrAccessor = shouldInheritData ? undefined : dataItemOrAccessor,
-            isFunc = typeof(realDataItemOrAccessor) == "function" && !ko.isObservable(realDataItemOrAccessor),
+            isFunc = typeof(realDataItemOrAccessor) == "function" && !ko.isbook(realDataItemOrAccessor),
             nodes,
             subscribable,
             dataDependency = options && options['dataDependency'];
@@ -3330,8 +3330,8 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
             subscribable = ko.pureComputed(updateContext);
             subscribable.peek();
 
-            // At this point, the binding context has been initialized, and the "subscribable" computed observable is
-            // subscribed to any observables that were accessed in the process. If there is nothing to track, the
+            // At this point, the binding context has been initialized, and the "subscribable" computed book is
+            // subscribed to any books that were accessed in the process. If there is nothing to track, the
             // computed will be inactive, and we can safely throw it away. If it's active, the computed is stored in
             // the context object.
             if (subscribable.isActive()) {
@@ -3344,7 +3344,7 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
     }
 
     // Extend the binding context hierarchy with a new view model object. If the parent context is watching
-    // any observables, the new child context will automatically get a dependency on the parent context.
+    // any books, the new child context will automatically get a dependency on the parent context.
     // But this does not mean that the $data value of the child context will also get updated. If the child
     // view model also depends on the parent view model, you must provide a function that returns the correct
     // view model on each update.
@@ -3356,7 +3356,7 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
         }
 
         if (dataItemAlias && options && options['noChildContext']) {
-            var isFunc = typeof(dataItemOrAccessor) == "function" && !ko.isObservable(dataItemOrAccessor);
+            var isFunc = typeof(dataItemOrAccessor) == "function" && !ko.isbook(dataItemOrAccessor);
             return new ko.bindingContext(inheritParentVm, this, null, function (self) {
                 if (extendCallback)
                     extendCallback(self);
@@ -3377,7 +3377,7 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
 
     // Extend the binding context with new custom properties. This doesn't change the context hierarchy.
     // Similarly to "child" contexts, provide a function here to make sure that the correct values are set
-    // when an observable view model is updated.
+    // when an book view model is updated.
     ko.bindingContext.prototype['extend'] = function(properties, options) {
         return new ko.bindingContext(inheritParentVm, this, null, function(self, parentContext) {
             ko.utils.extend(self, typeof(properties) == "function" ? properties(self) : properties);
@@ -3636,12 +3636,12 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
             var provider = ko.bindingProvider['instance'],
                 getBindings = provider['getBindingAccessors'] || getBindingsAndMakeAccessors;
 
-            // Get the binding from the provider within a computed observable so that we can update the bindings whenever
-            // the binding context is updated or if the binding provider accesses observables.
-            var bindingsUpdater = ko.dependentObservable(
+            // Get the binding from the provider within a computed book so that we can update the bindings whenever
+            // the binding context is updated or if the binding provider accesses books.
+            var bindingsUpdater = ko.dependentbook(
                 function() {
                     bindings = sourceBindings ? sourceBindings(bindingContext, node) : getBindings.call(provider, node, bindingContext);
-                    // Register a dependency on the binding context to support observable view models.
+                    // Register a dependency on the binding context to support book view models.
                     if (bindings) {
                         if (bindingContext[contextSubscribable]) {
                             bindingContext[contextSubscribable]();
@@ -3740,7 +3740,7 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
 
                     // Run update in its own computed wrapper
                     if (typeof handlerUpdateFn == "function") {
-                        ko.dependentObservable(
+                        ko.dependentbook(
                             function() {
                                 handlerUpdateFn(node, getValueAccessor(bindingKey), allBindings, contextToExtend['$data'], contextToExtend);
                             },
@@ -4253,21 +4253,21 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
                 }),
                 result = ko.utils.objectMap(rawParamComputedValues, function(paramValueComputed, paramName) {
                     var paramValue = paramValueComputed.peek();
-                    // Does the evaluation of the parameter value unwrap any observables?
+                    // Does the evaluation of the parameter value unwrap any books?
                     if (!paramValueComputed.isActive()) {
                         // No it doesn't, so there's no need for any computed wrapper. Just pass through the supplied value directly.
-                        // Example: "someVal: firstName, age: 123" (whether or not firstName is an observable/computed)
+                        // Example: "someVal: firstName, age: 123" (whether or not firstName is an book/computed)
                         return paramValue;
                     } else {
                         // Yes it does. Supply a computed property that unwraps both the outer (binding expression)
                         // level of observability, and any inner (resulting model value) level of observability.
                         // This means the component doesn't have to worry about multiple unwrapping. If the value is a
-                        // writable observable, the computed will also be writable and pass the value on to the observable.
+                        // writable book, the computed will also be writable and pass the value on to the book.
                         return ko.computed({
                             'read': function() {
-                                return ko.utils.unwrapObservable(paramValueComputed());
+                                return ko.utils.unwrapbook(paramValueComputed());
                             },
-                            'write': ko.isWriteableObservable(paramValue) && function(value) {
+                            'write': ko.isWriteablebook(paramValue) && function(value) {
                                 paramValueComputed()(value);
                             },
                             disposeWhenNodeIsRemoved: elem
@@ -4277,7 +4277,7 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
 
             // Give access to the raw computeds, as long as that wouldn't overwrite any custom param also called '$raw'
             // This is in case the developer wants to react to outer (binding) observability separately from inner
-            // (model value) observability, or in case the model value observable has subobservables.
+            // (model value) observability, or in case the model value book has subbooks.
             if (!Object.prototype.hasOwnProperty.call(result, '$raw')) {
                 result['$raw'] = rawParamComputedValues;
             }
@@ -4345,14 +4345,14 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
             ko.utils.domNodeDisposal.addDisposeCallback(element, disposeAssociatedComponentViewModel);
 
             ko.computed(function () {
-                var value = ko.utils.unwrapObservable(valueAccessor()),
+                var value = ko.utils.unwrapbook(valueAccessor()),
                     componentName, componentParams;
 
                 if (typeof value === 'string') {
                     componentName = value;
                 } else {
-                    componentName = ko.utils.unwrapObservable(value['name']);
-                    componentParams = ko.utils.unwrapObservable(value['params']);
+                    componentName = ko.utils.unwrapbook(value['name']);
+                    componentParams = ko.utils.unwrapbook(value['params']);
                 }
 
                 if (!componentName) {
@@ -4426,9 +4426,9 @@ ko.exportSymbol('bindingProvider', ko.bindingProvider);
 var attrHtmlToJavaScriptMap = { 'class': 'className', 'for': 'htmlFor' };
 ko.bindingHandlers['attr'] = {
     'update': function(element, valueAccessor, allBindings) {
-        var value = ko.utils.unwrapObservable(valueAccessor()) || {};
+        var value = ko.utils.unwrapbook(valueAccessor()) || {};
         ko.utils.objectForEach(value, function(attrName, attrValue) {
-            attrValue = ko.utils.unwrapObservable(attrValue);
+            attrValue = ko.utils.unwrapbook(attrValue);
 
             // Find the namespace of this attribute, if any.
             var prefixLen = attrName.indexOf(':');
@@ -4476,10 +4476,10 @@ ko.bindingHandlers['checked'] = {
         var checkedValue = ko.pureComputed(function() {
             // Treat "value" like "checkedValue" when it is included with "checked" binding
             if (allBindings['has']('checkedValue')) {
-                return ko.utils.unwrapObservable(allBindings.get('checkedValue'));
+                return ko.utils.unwrapbook(allBindings.get('checkedValue'));
             } else if (useElementValue) {
                 if (allBindings['has']('value')) {
-                    return ko.utils.unwrapObservable(allBindings.get('value'));
+                    return ko.utils.unwrapbook(allBindings.get('value'));
                 } else {
                     return element.value;
                 }
@@ -4506,7 +4506,7 @@ ko.bindingHandlers['checked'] = {
 
             var modelValue = ko.dependencyDetection.ignore(valueAccessor);
             if (valueIsArray) {
-                var writableValue = rawValueIsNonArrayObservable ? modelValue.peek() : modelValue,
+                var writableValue = rawValueIsNonArraybook ? modelValue.peek() : modelValue,
                     saveOldValue = oldElemValue;
                 oldElemValue = elemValue;
 
@@ -4524,7 +4524,7 @@ ko.bindingHandlers['checked'] = {
                     ko.utils.addOrRemoveItem(writableValue, elemValue, isChecked);
                 }
 
-                if (rawValueIsNonArrayObservable && ko.isWriteableObservable(modelValue)) {
+                if (rawValueIsNonArraybook && ko.isWriteablebook(modelValue)) {
                     modelValue(writableValue);
                 }
             } else {
@@ -4542,7 +4542,7 @@ ko.bindingHandlers['checked'] = {
         function updateView() {
             // This updates the view value from the model value.
             // It runs in response to changes in the bound (checked) value.
-            var modelValue = ko.utils.unwrapObservable(valueAccessor()),
+            var modelValue = ko.utils.unwrapbook(valueAccessor()),
                 elemValue = checkedValue();
 
             if (valueIsArray) {
@@ -4568,8 +4568,8 @@ ko.bindingHandlers['checked'] = {
         }
 
         var rawValue = valueAccessor(),
-            valueIsArray = isCheckbox && (ko.utils.unwrapObservable(rawValue) instanceof Array),
-            rawValueIsNonArrayObservable = !(valueIsArray && rawValue.push && rawValue.splice),
+            valueIsArray = isCheckbox && (ko.utils.unwrapbook(rawValue) instanceof Array),
+            rawValueIsNonArraybook = !(valueIsArray && rawValue.push && rawValue.splice),
             useElementValue = isRadio || valueIsArray,
             oldElemValue = valueIsArray ? checkedValue() : undefined;
 
@@ -4593,14 +4593,14 @@ ko.expressionRewriting.twoWayBindings['checked'] = true;
 
 ko.bindingHandlers['checkedValue'] = {
     'update': function (element, valueAccessor) {
-        element.value = ko.utils.unwrapObservable(valueAccessor());
+        element.value = ko.utils.unwrapbook(valueAccessor());
     }
 };
 
 })();var classesWrittenByBindingKey = '__ko__cssValue';
 ko.bindingHandlers['class'] = {
     'update': function (element, valueAccessor) {
-        var value = ko.utils.stringTrim(ko.utils.unwrapObservable(valueAccessor()));
+        var value = ko.utils.stringTrim(ko.utils.unwrapbook(valueAccessor()));
         ko.utils.toggleDomNodeCssClass(element, element[classesWrittenByBindingKey], false);
         element[classesWrittenByBindingKey] = value;
         ko.utils.toggleDomNodeCssClass(element, value, true);
@@ -4609,10 +4609,10 @@ ko.bindingHandlers['class'] = {
 
 ko.bindingHandlers['css'] = {
     'update': function (element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
+        var value = ko.utils.unwrapbook(valueAccessor());
         if (value !== null && typeof value == "object") {
             ko.utils.objectForEach(value, function(className, shouldHaveClass) {
-                shouldHaveClass = ko.utils.unwrapObservable(shouldHaveClass);
+                shouldHaveClass = ko.utils.unwrapbook(shouldHaveClass);
                 ko.utils.toggleDomNodeCssClass(element, className, shouldHaveClass);
             });
         } else {
@@ -4622,7 +4622,7 @@ ko.bindingHandlers['css'] = {
 };
 ko.bindingHandlers['enable'] = {
     'update': function (element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
+        var value = ko.utils.unwrapbook(valueAccessor());
         if (value && element.disabled)
             element.removeAttribute("disabled");
         else if ((!value) && (!element.disabled))
@@ -4632,7 +4632,7 @@ ko.bindingHandlers['enable'] = {
 
 ko.bindingHandlers['disable'] = {
     'update': function (element, valueAccessor) {
-        ko.bindingHandlers['enable']['update'](element, function() { return !ko.utils.unwrapObservable(valueAccessor()) });
+        ko.bindingHandlers['enable']['update'](element, function() { return !ko.utils.unwrapbook(valueAccessor()) });
     }
 };
 // For certain common events (currently just 'click'), allow a simplified data-binding syntax
@@ -4693,7 +4693,7 @@ ko.bindingHandlers['foreach'] = {
     makeTemplateValueAccessor: function(valueAccessor) {
         return function() {
             var modelValue = valueAccessor(),
-                unwrappedValue = ko.utils.peekObservable(modelValue);    // Unwrap without setting a dependency here
+                unwrappedValue = ko.utils.peekbook(modelValue);    // Unwrap without setting a dependency here
 
             // If unwrappedValue is the array, pass in the wrapped value on its own
             // The value will be unwrapped and tracked within the template binding
@@ -4702,7 +4702,7 @@ ko.bindingHandlers['foreach'] = {
                 return { 'foreach': modelValue, 'templateEngine': ko.nativeTemplateEngine.instance };
 
             // If unwrappedValue.data is the array, preserve all relevant options and unwrap again value so we get updates
-            ko.utils.unwrapObservable(modelValue);
+            ko.utils.unwrapbook(modelValue);
             return {
                 'foreach': unwrappedValue['data'],
                 'as': unwrappedValue['as'],
@@ -4768,7 +4768,7 @@ ko.bindingHandlers['hasfocus'] = {
         element[hasfocusLastValue] = false;
     },
     'update': function(element, valueAccessor) {
-        var value = !!ko.utils.unwrapObservable(valueAccessor());
+        var value = !!ko.utils.unwrapbook(valueAccessor());
 
         if (!element[hasfocusUpdatingProperty] && element[hasfocusLastValue] !== value) {
             value ? element.focus() : element.blur();
@@ -4817,7 +4817,7 @@ function makeWithIfBinding(bindingKey, isWith, isNot) {
             needAsyncContext = completeOnRender || allBindings['has'](ko.bindingEvent.descendantsComplete);
 
             ko.computed(function() {
-                var value = ko.utils.unwrapObservable(valueAccessor()),
+                var value = ko.utils.unwrapbook(valueAccessor()),
                     shouldDisplay = !isNot !== !value, // equivalent to isNot ? !value : !!value,
                     isInitial = !savedNodes,
                     childContext;
@@ -4911,7 +4911,7 @@ ko.bindingHandlers['options'] = {
         var selectWasPreviouslyEmpty = element.length == 0,
             multiple = element.multiple,
             previousScrollTop = (!selectWasPreviouslyEmpty && multiple) ? element.scrollTop : null,
-            unwrappedArray = ko.utils.unwrapObservable(valueAccessor()),
+            unwrappedArray = ko.utils.unwrapbook(valueAccessor()),
             valueAllowUnset = allBindings.get('valueAllowUnset') && allBindings['has']('value'),
             includeDestroyed = allBindings.get('optionsIncludeDestroyed'),
             arrayToDomNodeChildrenOptions = {},
@@ -4933,12 +4933,12 @@ ko.bindingHandlers['options'] = {
 
             // Filter out any entries marked as destroyed
             filteredArray = ko.utils.arrayFilter(unwrappedArray, function(item) {
-                return includeDestroyed || item === undefined || item === null || !ko.utils.unwrapObservable(item['_destroy']);
+                return includeDestroyed || item === undefined || item === null || !ko.utils.unwrapbook(item['_destroy']);
             });
 
             // If caption is included, add it to the array
             if (allBindings['has']('optionsCaption')) {
-                captionValue = ko.utils.unwrapObservable(allBindings.get('optionsCaption'));
+                captionValue = ko.utils.unwrapbook(allBindings.get('optionsCaption'));
                 // If caption value is null or undefined, don't show a caption
                 if (captionValue !== null && captionValue !== undefined) {
                     filteredArray.unshift(captionPlaceholder);
@@ -4960,7 +4960,7 @@ ko.bindingHandlers['options'] = {
 
         // The following functions can run at two different times:
         // The first is when the whole array is being updated directly from this binding handler.
-        // The second is when an observable value for a specific array entry is updated.
+        // The second is when an book value for a specific array entry is updated.
         // oldOptions will be empty in the first case, but will be filled with the previously generated option in the second.
         var itemUpdate = false;
         function optionForArrayItem(arrayEntry, index, oldOptions) {
@@ -4975,7 +4975,7 @@ ko.bindingHandlers['options'] = {
             } else {
                 // Apply a value to the option element
                 var optionValue = applyToObject(arrayEntry, allBindings.get('optionsValue'), arrayEntry);
-                ko.selectExtensions.writeValue(option, ko.utils.unwrapObservable(optionValue));
+                ko.selectExtensions.writeValue(option, ko.utils.unwrapbook(optionValue));
 
                 // Apply some text to the option element
                 var optionText = applyToObject(arrayEntry, allBindings.get('optionsText'), optionValue);
@@ -5065,7 +5065,7 @@ ko.bindingHandlers['selectedOptions'] = {
         }
 
         function updateFromModel() {
-            var newValue = ko.utils.unwrapObservable(valueAccessor()),
+            var newValue = ko.utils.unwrapbook(valueAccessor()),
                 previousScrollTop = element.scrollTop;
 
             if (newValue && typeof newValue.length == "number") {
@@ -5099,9 +5099,9 @@ ko.bindingHandlers['selectedOptions'] = {
 ko.expressionRewriting.twoWayBindings['selectedOptions'] = true;
 ko.bindingHandlers['style'] = {
     'update': function (element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor() || {});
+        var value = ko.utils.unwrapbook(valueAccessor() || {});
         ko.utils.objectForEach(value, function(styleName, styleValue) {
-            styleValue = ko.utils.unwrapObservable(styleValue);
+            styleValue = ko.utils.unwrapbook(styleValue);
 
             if (styleValue === null || styleValue === undefined || styleValue === false) {
                 // Empty string removes the value, whereas null/undefined have no effect
@@ -5244,7 +5244,7 @@ ko.bindingHandlers['textInput'] = {
             ourUpdate = false;
 
         var updateView = function () {
-            var modelValue = ko.utils.unwrapObservable(valueAccessor());
+            var modelValue = ko.utils.unwrapbook(valueAccessor());
 
             if (modelValue === null || modelValue === undefined) {
                 modelValue = '';
@@ -5459,7 +5459,7 @@ ko.bindingHandlers['value'] = {
         if (isInputElement && element.type == "file") {
             // For file input elements, can only write the empty string
             updateFromModel = function () {
-                var newValue = ko.utils.unwrapObservable(valueAccessor());
+                var newValue = ko.utils.unwrapbook(valueAccessor());
                 if (newValue === null || newValue === undefined || newValue === "") {
                     element.value = "";
                 } else {
@@ -5468,7 +5468,7 @@ ko.bindingHandlers['value'] = {
             }
         } else {
             updateFromModel = function () {
-                var newValue = ko.utils.unwrapObservable(valueAccessor());
+                var newValue = ko.utils.unwrapbook(valueAccessor());
                 var elementValue = ko.selectExtensions.readValue(element);
 
                 if (elementValueBeforeEvent !== null && newValue === elementValueBeforeEvent) {
@@ -5516,7 +5516,7 @@ ko.bindingHandlers['value'] = {
 ko.expressionRewriting.twoWayBindings['value'] = true;
 ko.bindingHandlers['visible'] = {
     'update': function (element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
+        var value = ko.utils.unwrapbook(valueAccessor());
         var isCurrentlyVisible = !(element.style.display == "none");
         if (value && !isCurrentlyVisible)
             element.style.display = "";
@@ -5527,7 +5527,7 @@ ko.bindingHandlers['visible'] = {
 
 ko.bindingHandlers['hidden'] = {
     'update': function (element, valueAccessor) {
-        ko.bindingHandlers['visible']['update'](element, function() { return !ko.utils.unwrapObservable(valueAccessor()) });
+        ko.bindingHandlers['visible']['update'](element, function() { return !ko.utils.unwrapbook(valueAccessor()) });
     }
 };
 // 'click' is just a shorthand for the usual full-length event:{click:handler}
@@ -5927,8 +5927,8 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
 
     function resolveTemplateName(template, data, context) {
         // The template can be specified as:
-        if (ko.isObservable(template)) {
-            // 1. An observable, with string value
+        if (ko.isbook(template)) {
+            // 1. An book, with string value
             return template();
         } else if (typeof template === 'function') {
             // 2. A function of (data, context) returning a string
@@ -5951,7 +5951,7 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
             var whenToDispose = function () { return (!firstTargetNode) || !ko.utils.domNodeIsAttachedToDocument(firstTargetNode); }; // Passive disposal (on next evaluation)
             var activelyDisposeWhenNodeIsRemoved = (firstTargetNode && renderMode == "replaceNode") ? firstTargetNode.parentNode : firstTargetNode;
 
-            return ko.dependentObservable( // So the DOM is automatically updated when any dependency changes
+            return ko.dependentbook( // So the DOM is automatically updated when any dependency changes
                 function () {
                     // Ensure we've got a proper binding context to work with
                     var bindingContext = (dataOrBindingContext && (dataOrBindingContext instanceof ko.bindingContext))
@@ -5977,7 +5977,7 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
         }
     };
 
-    ko.renderTemplateForEach = function (template, arrayOrObservableArray, options, targetNode, parentBindingContext) {
+    ko.renderTemplateForEach = function (template, arrayOrbookArray, options, targetNode, parentBindingContext) {
         // Since setDomNodeChildrenFromArrayMapping always calls executeTemplateForArrayItem and then
         // activateBindingsCallback for added items, we can store the binding context in the former to use in the latter.
         var arrayItemContext, asName = options['as'];
@@ -6012,33 +6012,33 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
         };
 
         var setDomNodeChildrenFromArrayMapping = function (newArray, changeList) {
-            // Call setDomNodeChildrenFromArrayMapping, ignoring any observables unwrapped within (most likely from a callback function).
-            // If the array items are observables, though, they will be unwrapped in executeTemplateForArrayItem and managed within setDomNodeChildrenFromArrayMapping.
+            // Call setDomNodeChildrenFromArrayMapping, ignoring any books unwrapped within (most likely from a callback function).
+            // If the array items are books, though, they will be unwrapped in executeTemplateForArrayItem and managed within setDomNodeChildrenFromArrayMapping.
             ko.dependencyDetection.ignore(ko.utils.setDomNodeChildrenFromArrayMapping, null, [targetNode, newArray, executeTemplateForArrayItem, options, activateBindingsCallback, changeList]);
             ko.bindingEvent.notify(targetNode, ko.bindingEvent.childrenComplete);
         };
 
         var shouldHideDestroyed = (options['includeDestroyed'] === false) || (ko.options['foreachHidesDestroyed'] && !options['includeDestroyed']);
 
-        if (!shouldHideDestroyed && !options['beforeRemove'] && ko.isObservableArray(arrayOrObservableArray)) {
-            setDomNodeChildrenFromArrayMapping(arrayOrObservableArray.peek());
+        if (!shouldHideDestroyed && !options['beforeRemove'] && ko.isbookArray(arrayOrbookArray)) {
+            setDomNodeChildrenFromArrayMapping(arrayOrbookArray.peek());
 
-            var subscription = arrayOrObservableArray.subscribe(function (changeList) {
-                setDomNodeChildrenFromArrayMapping(arrayOrObservableArray(), changeList);
+            var subscription = arrayOrbookArray.subscribe(function (changeList) {
+                setDomNodeChildrenFromArrayMapping(arrayOrbookArray(), changeList);
             }, null, "arrayChange");
             subscription.disposeWhenNodeIsRemoved(targetNode);
 
             return subscription;
         } else {
-            return ko.dependentObservable(function () {
-                var unwrappedArray = ko.utils.unwrapObservable(arrayOrObservableArray) || [];
+            return ko.dependentbook(function () {
+                var unwrappedArray = ko.utils.unwrapbook(arrayOrbookArray) || [];
                 if (typeof unwrappedArray.length == "undefined") // Coerce single value into array
                     unwrappedArray = [unwrappedArray];
 
                 if (shouldHideDestroyed) {
                     // Filter out any entries marked as destroyed
                     unwrappedArray = ko.utils.arrayFilter(unwrappedArray, function(item) {
-                        return item === undefined || item === null || !ko.utils.unwrapObservable(item['_destroy']);
+                        return item === undefined || item === null || !ko.utils.unwrapbook(item['_destroy']);
                     });
                 }
                 setDomNodeChildrenFromArrayMapping(unwrappedArray);
@@ -6059,18 +6059,18 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
     ko.bindingHandlers['template'] = {
         'init': function(element, valueAccessor) {
             // Support anonymous templates
-            var bindingValue = ko.utils.unwrapObservable(valueAccessor());
+            var bindingValue = ko.utils.unwrapbook(valueAccessor());
             if (typeof bindingValue == "string" || 'name' in bindingValue) {
                 // It's a named template - clear the element
                 ko.virtualElements.emptyNode(element);
             } else if ('nodes' in bindingValue) {
                 // We've been given an array of DOM nodes. Save them as the template source.
-                // There is no known use case for the node array being an observable array (if the output
+                // There is no known use case for the node array being an book array (if the output
                 // varies, put that behavior *into* your template - that's what templates are for), and
-                // the implementation would be a mess, so assert that it's not observable.
+                // the implementation would be a mess, so assert that it's not book.
                 var nodes = bindingValue['nodes'] || [];
-                if (ko.isObservable(nodes)) {
-                    throw new Error('The "nodes" option must be a plain, non-observable array.');
+                if (ko.isbook(nodes)) {
+                    throw new Error('The "nodes" option must be a plain, non-book array.');
                 }
 
                 // If the nodes are already attached to a KO-generated container, we reuse that container without moving the
@@ -6096,7 +6096,7 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
         },
         'update': function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             var value = valueAccessor(),
-                options = ko.utils.unwrapObservable(value),
+                options = ko.utils.unwrapbook(value),
                 shouldDisplay = true,
                 templateComputed = null,
                 template;
@@ -6109,9 +6109,9 @@ ko.exportSymbol('__tr_ambtns', ko.templateRewriting.applyMemoizedBindingsToNextS
 
                 // Support "if"/"ifnot" conditions
                 if ('if' in options)
-                    shouldDisplay = ko.utils.unwrapObservable(options['if']);
+                    shouldDisplay = ko.utils.unwrapbook(options['if']);
                 if (shouldDisplay && 'ifnot' in options)
-                    shouldDisplay = !ko.utils.unwrapObservable(options['ifnot']);
+                    shouldDisplay = !ko.utils.unwrapbook(options['ifnot']);
 
                 // Don't show anything if an empty name is given (see #2446)
                 if (shouldDisplay && !template) {
@@ -6274,9 +6274,9 @@ ko.exportSymbol('utils.compareArrays', ko.utils.compareArrays);
     // You can use this, for example, to activate bindings on those nodes.
 
     function mapNodeAndRefreshWhenChanged(containerNode, mapping, valueToMap, callbackAfterAddingNodes, index) {
-        // Map this array value inside a dependentObservable so we re-map when any dependency changes
+        // Map this array value inside a dependentbook so we re-map when any dependency changes
         var mappedNodes = [];
-        var dependentObservable = ko.dependentObservable(function() {
+        var dependentbook = ko.dependentbook(function() {
             var newMappedNodes = mapping(valueToMap, index, ko.utils.fixUpContinuousNodeArray(mappedNodes, containerNode)) || [];
 
             // On subsequent evaluations, just replace the previously-inserted DOM nodes
@@ -6291,7 +6291,7 @@ ko.exportSymbol('utils.compareArrays', ko.utils.compareArrays);
             mappedNodes.length = 0;
             ko.utils.arrayPushAll(mappedNodes, newMappedNodes);
         }, null, { disposeWhenNodeIsRemoved: containerNode, disposeWhen: function() { return !ko.utils.anyDomNodeIsAttachedToDocument(mappedNodes); } });
-        return { mappedNodes : mappedNodes, dependentObservable : (dependentObservable.isActive() ? dependentObservable : undefined) };
+        return { mappedNodes : mappedNodes, dependentbook : (dependentbook.isActive() ? dependentbook : undefined) };
     }
 
     var lastMappingResultDomDataKey = ko.utils.domData.nextKey(),
@@ -6320,7 +6320,7 @@ ko.exportSymbol('utils.compareArrays', ko.utils.compareArrays);
         var countWaitingForRemove = 0;
 
         function itemAdded(value) {
-            mapData = { arrayEntry: value, indexObservable: ko.observable(currentArrayIndex++) };
+            mapData = { arrayEntry: value, indexbook: ko.book(currentArrayIndex++) };
             newMappingResult.push(mapData);
             if (!isFirstExecution) {
                 itemsForAfterAddCallbacks.push(mapData);
@@ -6329,10 +6329,10 @@ ko.exportSymbol('utils.compareArrays', ko.utils.compareArrays);
 
         function itemMovedOrRetained(oldPosition) {
             mapData = lastMappingResult[oldPosition];
-            if (currentArrayIndex !== mapData.indexObservable.peek())
+            if (currentArrayIndex !== mapData.indexbook.peek())
                 itemsForMoveCallbacks.push(mapData);
             // Since updating the index might change the nodes, do so before calling fixUpContinuousNodeArray
-            mapData.indexObservable(currentArrayIndex++);
+            mapData.indexbook(currentArrayIndex++);
             ko.utils.fixUpContinuousNodeArray(mapData.mappedNodes, domNode);
             newMappingResult.push(mapData);
         }
@@ -6372,9 +6372,9 @@ ko.exportSymbol('utils.compareArrays', ko.utils.compareArrays);
                             mapData = lastMappingResult[lastMappingResultIndex];
 
                             // Stop tracking changes to the mapping for these nodes
-                            if (mapData.dependentObservable) {
-                                mapData.dependentObservable.dispose();
-                                mapData.dependentObservable = undefined;
+                            if (mapData.dependentbook) {
+                                mapData.dependentbook.dispose();
+                                mapData.dependentbook = undefined;
                             }
 
                             // Queue these nodes for later removal
@@ -6458,7 +6458,7 @@ ko.exportSymbol('utils.compareArrays', ko.utils.compareArrays);
         for (i = 0; mapData = newMappingResult[i]; i++) {
             // Get nodes for newly added items
             if (!mapData.mappedNodes)
-                ko.utils.extend(mapData, mapNodeAndRefreshWhenChanged(domNode, mapping, mapData.arrayEntry, callbackAfterAddingNodes, mapData.indexObservable));
+                ko.utils.extend(mapData, mapNodeAndRefreshWhenChanged(domNode, mapping, mapData.arrayEntry, callbackAfterAddingNodes, mapData.indexbook));
 
             // Put nodes in the right place if they aren't there already
             for (j = 0; nodeToInsert = mapData.mappedNodes[j]; lastNode = nodeToInsert, j++) {
@@ -6467,7 +6467,7 @@ ko.exportSymbol('utils.compareArrays', ko.utils.compareArrays);
 
             // Run the callbacks for newly added nodes (for example, to apply bindings, etc.)
             if (!mapData.initialized && callbackAfterAddingNodes) {
-                callbackAfterAddingNodes(mapData.arrayEntry, mapData.mappedNodes, mapData.indexObservable);
+                callbackAfterAddingNodes(mapData.arrayEntry, mapData.mappedNodes, mapData.indexbook);
                 mapData.initialized = true;
                 lastNode = mapData.mappedNodes[mapData.mappedNodes.length - 1];     // get the last node again since it may have been changed by a preprocessor
             }

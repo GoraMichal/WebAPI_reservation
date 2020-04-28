@@ -1,29 +1,29 @@
 ﻿@using WebAPI_reservation.Models
-
 @model IEnumerable<Book>
 
 @{
-    ViewBag.Title = "Book";
+    ViewBag.Title = "book";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@section Scripts{
+@section Scripts {
     <script>
         //zdefiniowanie modelu (użycie biblioteki Knockout)
         var model = {
-            book: ko.observableArray()
-
+            book: ko.observableArray(),
             edit: {
-                name: ko.book(""),
-                location: ko.book("")
+                customername: ko.observable(""),
+                room: ko.observable("")
             },
             displayList: ko.observable(true)
         };
 
         // $.ajax zapewnia dostep do funkcji jQuery Ajax.
-        function sendAjaxRequest(httpMethod, callback, url) {
+        function sendAjaxRequest(httpMethod, callback, url, reqData) {
             $.ajax("/api/web" + (url ? "/" + url : ""), {
-                type: httpMethod, success: callback
+                type: httpMethod,
+                success: callback,
+                data: reqData
             });
         }
 
@@ -41,9 +41,27 @@
 
         function removeItem(item) {
             sendAjaxRequest("DELETE", function () {
-                //odswiezenie danych
-                getAllItems();
+                for (var i = 0; i < model.book().length; i++) {
+                    if (model.book()[i].BookId == item.BookId) {
+                        model.book.remove(model.book()[i]);
+                        break;
+                    }
+                }
             }, item.BookId);
+        }
+
+        function handleCreateClick() {
+            model.displayList(false);
+        }
+
+        function handleEditClick() {
+            sendAjaxRequest("POST", function (newItem) {
+                model.book.push(newItem);
+                model.displayList(true);
+            }, null, {
+                CustomerName: model.edit.customername,
+                Room: model.edit.room
+            });
         }
 
         //(document).ready - opoznienie wykonanai funkcji, dopoki elementy HTML zostana wczytane
@@ -55,9 +73,8 @@
         });
     </script>
 }
-
-@section Body{
-    <div id="summary" class="section panel panel-primary">
+@section Body {
+    <div id="summary" data-bind="if: model.displayList">
         <div class="card-header bg-primary text-white pb-0"><h4>Lista Rezerwacji</h4></div>
         <div class="card-body">
             <table class="table table-striped table-sm">
@@ -69,7 +86,6 @@
                         <th></th>
                     </tr>
                 </thead>
-                @* Mechanizm dolaczania *@
                 <tbody data-bind="foreach: model.book">
                     <tr>
                         <td data-bind="text: BookId"></td>
@@ -83,15 +99,33 @@
                     </tr>
                 </tbody>
             </table>
+            <button class="btn btn-primary" data-bind="click: handleCreateClick">
+                Utwórz
+            </button>
         </div>
     </div>
 
+    <div id="edit" data-bind="ifnot: model.displayList">
+        <div class="card-header bg-primary text-white pb-0"><h4>Zarezerwuj</h4></div>
+        <div class="card-body">
+            <div class="form-group">
+                <label>Wynajmujący</label>
+                <input class="form-control" data-bind="value: model.edit.customername" />
+            </div>
+            <div class="form-group">
+                <label>Pokój</label>
+                <input class="form-control" data-bind="value: model.edit.room" />
+            </div>
+            <button class="btn btn-primary" data-bind="click: handleEditClick">
+                Zapisz
+            </button>
+        </div>
+    </div>
 
     @*<div id="list" class="section card">
             @Html.Partial("List", Model)
+        </div>
+        <div id="edit" class="section card">
+            @Html.Partial("Edit", new Book())
         </div>*@
-    <div id="edit" class="section card">
-        @Html.Partial("Edit", new Book())
-    </div>
-
 }
